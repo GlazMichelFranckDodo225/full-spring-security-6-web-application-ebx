@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 
 import static org.springframework.security.config.Customizer.withDefaults;
@@ -24,11 +25,16 @@ public class SecurityConfig {
                         .anyRequest()
                         .authenticated()
         );
+        // To Disable Cookies Management and Make API Stateless
+        http.sessionManagement(
+                session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+        );
         // We have Disabled Form-Based Authentication
-        http.formLogin(withDefaults());
+        // http.formLogin(withDefaults());
         // Tells Spring Security to Use Basic Authentication (Alert Box)
         // with Username and Password
-        // http.httpBasic(withDefaults());
+        http.httpBasic(withDefaults());
 
         // Returns an Object of SecurityFilterChain Type
         return http.build();
