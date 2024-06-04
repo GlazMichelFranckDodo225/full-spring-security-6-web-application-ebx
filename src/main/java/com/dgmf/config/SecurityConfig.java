@@ -25,10 +25,10 @@ public class SecurityConfig {
                         .authenticated()
         );
         // We have Disabled Form-Based Authentication
-        // http.formLogin(withDefaults());
+        http.formLogin(withDefaults());
         // Tells Spring Security to Use Basic Authentication (Alert Box)
         // with Username and Password
-        http.httpBasic(withDefaults());
+        // http.httpBasic(withDefaults());
 
         // Returns an Object of SecurityFilterChain Type
         return http.build();
