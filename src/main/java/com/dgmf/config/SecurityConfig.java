@@ -2,6 +2,7 @@ package com.dgmf.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -17,6 +18,7 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @Configuration
 // Enable Web Security Features and Allows Customization
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
     // Tells Spring IoC Container (ApplicationContext) to Hold a Bean Based
     // the Below Configurations
