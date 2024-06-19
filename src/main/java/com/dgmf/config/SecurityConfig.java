@@ -5,6 +5,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
 import static org.springframework.security.config.Customizer.withDefaults;
@@ -38,5 +42,24 @@ public class SecurityConfig {
 
         // Returns an Object of SecurityFilterChain Type
         return http.build();
+    }
+
+    // In Memory Authentication
+    // InMemoryUserDetailsManager ==> Implementation of UserDetailsService
+    // Prefix {noop} ==> To Tell Spring this Password Should Be Stored as
+    // Plain Text
+    @Bean
+    public UserDetailsService userDetailsService() {
+        UserDetails user = User.withUsername("user")
+                .password("{noop}userPassword")
+                .roles("USER")
+                .build();
+
+        UserDetails admin = User.withUsername("admin")
+                .password("{noop}adminPassword")
+                .roles("ADMIN")
+                .build();
+
+        return new InMemoryUserDetailsManager(user, admin); // Constructor
     }
 }
