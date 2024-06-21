@@ -5,6 +5,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -28,8 +30,9 @@ public class SecurityConfig {
         // Any Request Should Be Authenticated
         http.authorizeHttpRequests(
                 requests -> requests
-                        .anyRequest()
-                        .authenticated()
+                        // Disable Spring Security for H2 InMemory DB
+                        .requestMatchers("/h2-console/**").permitAll()
+                        .anyRequest().authenticated()
         );
         // To Disable Cookies Management and Make API Stateless
         http.sessionManagement(
@@ -41,7 +44,12 @@ public class SecurityConfig {
         // Tells Spring Security to Use Basic Authentication (Alert Box)
         // with Username and Password
         http.httpBasic(withDefaults());
-
+        // For Http Headers, allows Frame Options for the Same Origins
+        http.headers(headers -> headers.frameOptions(
+                HeadersConfigurer.FrameOptionsConfig::sameOrigin
+            )
+        );
+        http.csrf(AbstractHttpConfigurer::disable);
         // Returns an Object of SecurityFilterChain Type
         return http.build();
     }
