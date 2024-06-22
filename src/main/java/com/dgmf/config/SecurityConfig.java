@@ -1,5 +1,6 @@
 package com.dgmf.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -12,7 +13,10 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+
+import javax.sql.DataSource;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
@@ -22,6 +26,11 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
+    // With AutoConfiguration (H2 in application.properties File), Spring
+    // will Automatically Inject the Datasource (H2)
+    @Autowired
+    private DataSource dataSource;
+
     // Tells Spring IoC Container (ApplicationContext) to Hold a Bean Based
     // the Below Configurations
     @Bean
@@ -61,15 +70,23 @@ public class SecurityConfig {
     @Bean
     public UserDetailsService userDetailsService() {
         UserDetails user = User.withUsername("user")
-                .password("{noop}userPassword")
+                .password("{noop}user")
                 .roles("USER")
                 .build();
 
         UserDetails admin = User.withUsername("admin")
-                .password("{noop}adminPassword")
+                .password("{noop}admin")
                 .roles("ADMIN")
                 .build();
 
-        return new InMemoryUserDetailsManager(user, admin); // Constructor
+        // Set up the Datasource
+        JdbcUserDetailsManager jdbcUserDetailsManager =
+                new JdbcUserDetailsManager(dataSource);
+        jdbcUserDetailsManager.createUser(user);
+        jdbcUserDetailsManager.createUser(admin);
+
+        // return new InMemoryUserDetailsManager(user, admin); // Constructor
+        return jdbcUserDetailsManager;
+
     }
 }
