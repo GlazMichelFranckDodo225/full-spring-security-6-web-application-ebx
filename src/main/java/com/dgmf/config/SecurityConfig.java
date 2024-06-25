@@ -12,7 +12,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -63,6 +64,11 @@ public class SecurityConfig {
         return http.build();
     }
 
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
     // In Memory Authentication
     // InMemoryUserDetailsManager ==> Implementation of UserDetailsService
     // Prefix {noop} ==> To Tell Spring this Password Should Be Stored as
@@ -70,12 +76,14 @@ public class SecurityConfig {
     @Bean
     public UserDetailsService userDetailsService() {
         UserDetails user = User.withUsername("user")
-                .password("{noop}user")
+                // .password("{noop}user") ==> Plain Text Storage
+                .password(passwordEncoder().encode("user"))
                 .roles("USER")
                 .build();
 
         UserDetails admin = User.withUsername("admin")
-                .password("{noop}admin")
+                // .password("{noop}admin") ==> Plain Text Storage
+                .password(passwordEncoder().encode("admin"))
                 .roles("ADMIN")
                 .build();
 
@@ -87,6 +95,5 @@ public class SecurityConfig {
 
         // return new InMemoryUserDetailsManager(user, admin); // Constructor
         return jdbcUserDetailsManager;
-
     }
 }
