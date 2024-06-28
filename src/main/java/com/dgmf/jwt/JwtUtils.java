@@ -1,4 +1,4 @@
-package com.dgmf.security.jwt;
+package com.dgmf.jwt;
 
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -7,23 +7,25 @@ import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Controller;
+import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.security.Key;
 import java.util.Date;
 
-@Controller
+@Component
+@RequiredArgsConstructor
 public class JwtUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(JwtUtils.class);
     @Value("${spring.app.jwtSecret}")
-    private String jwtSecret;
+    private final String jwtSecret;
     @Value("${spring.app.jwtExpirationMs}")
-    private Integer jwtExpirationMs;
+    private final Integer jwtExpirationMs;
 
     public String getJwtFromHeader(HttpServletRequest request) {
         // Retrieve "Authorization" Header
