@@ -7,7 +7,6 @@ import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,21 +17,28 @@ import javax.crypto.SecretKey;
 import java.security.Key;
 import java.util.Date;
 
+/*
+Contains Utility Methods to Generating, Parsing and Validating
+JWTs Including :
+    - Generating a Token from a Username,
+    - Validating a JWT,
+    - Extracting the Username from a Token.
+*/
 @Component
-@RequiredArgsConstructor
 public class JwtUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(JwtUtils.class);
+    // Used to Sign the Token
     @Value("${spring.app.jwtSecret}")
-    private final String jwtSecret;
+    private String jwtSecret;
     @Value("${spring.app.jwtExpirationMs}")
-    private final Integer jwtExpirationMs;
+    private String jwtExpirationMs;
 
     public String getJwtFromHeader(HttpServletRequest request) {
         // Retrieve "Authorization" Header
         String bearerToken = request.getHeader("Authorization");
+        LOGGER.debug("Authorization Header : {}", bearerToken);
 
         // Extract and Retrieve Bearer Token
-        LOGGER.debug("Authorization Header : {}", bearerToken);
         if(bearerToken != null && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7); // Remove Bearer Prefix
         }

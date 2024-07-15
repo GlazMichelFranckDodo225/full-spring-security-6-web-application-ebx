@@ -4,9 +4,9 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,15 +17,25 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+/*
+Filters Incoming Requests to
+    - Check for a Valid JWT in the Header,
+    - Setting the Authentication Context if the Token is Valid,
+    - Extracts JWT from Request Header,
+    - Validate the Token,
+    - Configure the Spring Security Context with User Details if
+    the Token is Valid.
+*/
 // OncePerRequestFilter ==> Filter base class that aims to
 // guarantee a single execution per request dispatch, on
 // any servlet container : AuthTokenFilter will Be Executed
 // Only Once Per Request
 @Component
-@RequiredArgsConstructor
 public class AuthTokenFilter extends OncePerRequestFilter {
-    private final JwtUtils jwtUtils;
-    private final UserDetailsService userDetailsService;
+    @Autowired
+    private JwtUtils jwtUtils;
+    @Autowired
+    private UserDetailsService userDetailsService;
     private final static Logger LOGGER = LoggerFactory.getLogger(AuthTokenFilter.class);
 
     @Override
@@ -48,6 +58,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                                     null, userDetails.getAuthorities()
                             );
                     LOGGER.debug("Roles from JWT : {}", userDetails.getAuthorities());
+                    // Enhancing Authentication Object with Additional Details from the Request (SessionId, ...)
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
@@ -55,6 +66,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                 LOGGER.error("Cannot Set User Authentication : {}", e);
             }
 
+            // Hand Over the Request to Next Filter
             filterChain.doFilter(request, response);
     }
 
