@@ -1,8 +1,13 @@
 package com.dgmf.config.security;
 
+import com.dgmf.jwt.AuthEntryPointJwt;
+import com.dgmf.jwt.AuthTokenFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -16,6 +21,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import javax.sql.DataSource;
 
@@ -31,6 +37,13 @@ public class SecurityConfig {
     // will Automatically Inject the Datasource (H2)
     @Autowired
     private DataSource dataSource;
+    @Autowired
+    private AuthEntryPointJwt unauthorizedHandler;
+
+    @Bean
+    public AuthTokenFilter authenticationJwtTokenFilter() {
+        return new AuthTokenFilter();
+    }
 
     // Tells Spring IoC Container (ApplicationContext) to Hold a Bean Based
     // the Below Configurations
@@ -42,6 +55,7 @@ public class SecurityConfig {
                 requests -> requests
                         // Disable Spring Security for H2 InMemory DB
                         .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers("/api/signin", "/api/login").permitAll()
                         .anyRequest().authenticated()
         );
         // To Disable Cookies Management and Make API Stateless
@@ -53,13 +67,18 @@ public class SecurityConfig {
         // http.formLogin(withDefaults());
         // Tells Spring Security to Use Basic Authentication (Alert Box)
         // with Username and Password
-        http.httpBasic(withDefaults());
+        // http.httpBasic(withDefaults());
+        http.exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler));
         // For Http Headers, allows Frame Options for the Same Origins
         http.headers(headers -> headers.frameOptions(
                 HeadersConfigurer.FrameOptionsConfig::sameOrigin
             )
         );
         http.csrf(AbstractHttpConfigurer::disable);
+        http.addFilterBefore(
+                authenticationJwtTokenFilter(),
+                UsernamePasswordAuthenticationFilter.class
+        );
         // Returns an Object of SecurityFilterChain Type
         return http.build();
     }
@@ -67,6 +86,13 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration builder
+    ) throws Exception {
+        return builder.getAuthenticationManager();
     }
 
     // In Memory Authentication
