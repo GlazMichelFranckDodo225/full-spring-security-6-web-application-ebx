@@ -3,10 +3,10 @@ package com.dgmf.config.security;
 import com.dgmf.jwt.AuthEntryPointJwt;
 import com.dgmf.jwt.AuthTokenFilter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -24,8 +24,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import javax.sql.DataSource;
-
-import static org.springframework.security.config.Customizer.withDefaults;
 
 // Provide Configurations for Spring IoC Container (ApplicationContext)
 @Configuration
@@ -55,7 +53,7 @@ public class SecurityConfig {
                 requests -> requests
                         // Disable Spring Security for H2 InMemory DB
                         .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers("/api/signin", "/api/login").permitAll()
+                        .requestMatchers("/signin", "/login").permitAll()
                         .anyRequest().authenticated()
         );
         // To Disable Cookies Management and Make API Stateless
@@ -84,6 +82,33 @@ public class SecurityConfig {
     }
 
     @Bean
+    public UserDetailsService userDetailsService(DataSource dataSource) {
+        return new JdbcUserDetailsManager(dataSource);
+    }
+
+    public CommandLineRunner initData(UserDetailsService userDetailsService) {
+        return args -> {
+            UserDetails user = User.withUsername("user")
+                    // .password("{noop}user") ==> Plain Text Storage
+                    .password(passwordEncoder().encode("user"))
+                    .roles("USER")
+                    .build();
+
+            UserDetails admin = User.withUsername("admin")
+                    // .password("{noop}admin") ==> Plain Text Storage
+                    .password(passwordEncoder().encode("admin"))
+                    .roles("ADMIN")
+                    .build();
+
+            // Set up the Datasource
+            JdbcUserDetailsManager jdbcUserDetailsManager =
+                    new JdbcUserDetailsManager(dataSource);
+            jdbcUserDetailsManager.createUser(user);
+            jdbcUserDetailsManager.createUser(admin);
+        };
+    }
+
+    @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
@@ -93,33 +118,5 @@ public class SecurityConfig {
             AuthenticationConfiguration builder
     ) throws Exception {
         return builder.getAuthenticationManager();
-    }
-
-    // In Memory Authentication
-    // InMemoryUserDetailsManager ==> Implementation of UserDetailsService
-    // Prefix {noop} ==> To Tell Spring this Password Should Be Stored as
-    // Plain Text
-    @Bean
-    public UserDetailsService userDetailsService() {
-        UserDetails user = User.withUsername("user")
-                // .password("{noop}user") ==> Plain Text Storage
-                .password(passwordEncoder().encode("user"))
-                .roles("USER")
-                .build();
-
-        UserDetails admin = User.withUsername("admin")
-                // .password("{noop}admin") ==> Plain Text Storage
-                .password(passwordEncoder().encode("admin"))
-                .roles("ADMIN")
-                .build();
-
-        // Set up the Datasource
-        JdbcUserDetailsManager jdbcUserDetailsManager =
-                new JdbcUserDetailsManager(dataSource);
-        jdbcUserDetailsManager.createUser(user);
-        jdbcUserDetailsManager.createUser(admin);
-
-        // return new InMemoryUserDetailsManager(user, admin); // Constructor
-        return jdbcUserDetailsManager;
     }
 }
